@@ -1,28 +1,40 @@
 const Footer = () => {
   return (
-    <footer className="border-t bg-white">
+    <footer className="border-t border-gray-100 bg-white">
       <div className="mx-auto w-full max-w-7xl px-4 py-10">
-        <div className="grid grid-cols-2 gap-8 text-sm text-gray-700 md:grid-cols-4">
+        <div className="grid grid-cols-2 items-start gap-y-8 gap-x-10 text-sm text-gray-700 sm:grid-cols-2 md:grid-cols-4 md:gap-x-16 lg:gap-x-24">
           <div>
             <h3 className="mb-3 font-semibold text-gray-900">Support</h3>
             <ul className="space-y-2">
               <li>
-                <a className="hover:underline" href="#">
+                <a
+                  className="inline-block rounded py-0.5 transition-colors hover:bg-gray-100 hover:underline"
+                  href="#"
+                >
                   Help Center
                 </a>
               </li>
               <li>
-                <a className="hover:underline" href="#">
+                <a
+                  className="inline-block rounded py-0.5 transition-colors hover:bg-gray-100 hover:underline"
+                  href="#"
+                >
                   AirCover
                 </a>
               </li>
               <li>
-                <a className="hover:underline" href="#">
+                <a
+                  className="inline-block rounded py-0.5 transition-colors hover:bg-gray-100 hover:underline"
+                  href="#"
+                >
                   Anti-discrimination
                 </a>
               </li>
               <li>
-                <a className="hover:underline" href="#">
+                <a
+                  className="inline-block rounded py-0.5 transition-colors hover:bg-gray-100 hover:underline"
+                  href="#"
+                >
                   Disability support
                 </a>
               </li>
@@ -32,22 +44,34 @@ const Footer = () => {
             <h3 className="mb-3 font-semibold text-gray-900">Hosting</h3>
             <ul className="space-y-2">
               <li>
-                <a className="hover:underline" href="#">
+                <a
+                  className="inline-block rounded py-0.5 transition-colors hover:bg-gray-100 hover:underline"
+                  href="#"
+                >
                   TravelBnb your home
                 </a>
               </li>
               <li>
-                <a className="hover:underline" href="#">
+                <a
+                  className="inline-block rounded py-0.5 transition-colors hover:bg-gray-100 hover:underline"
+                  href="#"
+                >
                   AirCover for Hosts
                 </a>
               </li>
               <li>
-                <a className="hover:underline" href="#">
+                <a
+                  className="inline-block rounded py-0.5 transition-colors hover:bg-gray-100 hover:underline"
+                  href="#"
+                >
                   Hosting resources
                 </a>
               </li>
               <li>
-                <a className="hover:underline" href="#">
+                <a
+                  className="inline-block rounded py-0.5 transition-colors hover:bg-gray-100 hover:underline"
+                  href="#"
+                >
                   Community forum
                 </a>
               </li>
@@ -57,22 +81,34 @@ const Footer = () => {
             <h3 className="mb-3 font-semibold text-gray-900">TravelBnb</h3>
             <ul className="space-y-2">
               <li>
-                <a className="hover:underline" href="#">
+                <a
+                  className="inline-block rounded py-0.5 transition-colors hover:bg-gray-100 hover:underline"
+                  href="#"
+                >
                   Newsroom
                 </a>
               </li>
               <li>
-                <a className="hover:underline" href="#">
+                <a
+                  className="inline-block rounded py-0.5 transition-colors hover:bg-gray-100 hover:underline"
+                  href="#"
+                >
                   Investors
                 </a>
               </li>
               <li>
-                <a className="hover:underline" href="#">
+                <a
+                  className="inline-block rounded py-0.5 transition-colors hover:bg-gray-100 hover:underline"
+                  href="#"
+                >
                   Careers
                 </a>
               </li>
               <li>
-                <a className="hover:underline" href="#">
+                <a
+                  className="inline-block rounded py-0.5 transition-colors hover:bg-gray-100 hover:underline"
+                  href="#"
+                >
                   Gift cards
                 </a>
               </li>
@@ -82,22 +118,34 @@ const Footer = () => {
             <h3 className="mb-3 font-semibold text-gray-900">Discover</h3>
             <ul className="space-y-2">
               <li>
-                <a className="hover:underline" href="#">
+                <a
+                  className="inline-block rounded py-0.5 transition-colors hover:bg-gray-100 hover:underline"
+                  href="#"
+                >
                   Homes
                 </a>
               </li>
               <li>
-                <a className="hover:underline" href="#">
+                <a
+                  className="inline-block rounded py-0.5 transition-colors hover:bg-gray-100 hover:underline"
+                  href="#"
+                >
                   Experiences
                 </a>
               </li>
               <li>
-                <a className="hover:underline" href="#">
+                <a
+                  className="inline-block rounded py-0.5 transition-colors hover:bg-gray-100 hover:underline"
+                  href="#"
+                >
                   Services
                 </a>
               </li>
               <li>
-                <a className="hover:underline" href="#">
+                <a
+                  className="inline-block rounded py-0.5 transition-colors hover:bg-gray-100 hover:underline"
+                  href="#"
+                >
                   Top-rated stays
                 </a>
               </li>
@@ -106,11 +154,11 @@ const Footer = () => {
         </div>
       </div>
 
-      <div className="border-t">
+      <div className="border-t border-gray-100">
         <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-4 px-4 py-6 text-sm text-gray-600 md:flex-row">
           <p>© {new Date().getFullYear()} TravelBnb, Inc.</p>
           <div className="flex flex-wrap items-center gap-3">
-            <button className="flex items-center gap-2 hover:underline">
+            <button className="flex items-center gap-2 rounded-lg border border-transparent px-2 py-1 transition-colors hover:border-gray-300 hover:bg-gray-50 hover:underline">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -125,15 +173,26 @@ const Footer = () => {
               </svg>
               English (IN)
             </button>
-            <button className="hover:underline">₹ INR</button>
+            <button className="rounded-lg border border-transparent px-2 py-1 transition-colors hover:border-gray-300 hover:bg-gray-50 hover:underline">
+              ₹ INR
+            </button>
             <div className="mx-2 h-4 w-px bg-gray-300" />
-            <a className="hover:underline" href="#">
+            <a
+              className="rounded px-1 py-0.5 transition-colors hover:bg-gray-100 hover:underline"
+              href="#"
+            >
               Privacy
             </a>
-            <a className="hover:underline" href="#">
+            <a
+              className="rounded px-1 py-0.5 transition-colors hover:bg-gray-100 hover:underline"
+              href="#"
+            >
               Terms
             </a>
-            <a className="hover:underline" href="#">
+            <a
+              className="rounded px-1 py-0.5 transition-colors hover:bg-gray-100 hover:underline"
+              href="#"
+            >
               Sitemap
             </a>
           </div>

@@ -1,9 +1,22 @@
+"use client";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 const Navbar = () => {
+  const [userName, setUserName] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("user");
+      if (raw) {
+        const u = JSON.parse(raw);
+        if (u?.name) setUserName(u.name as string);
+      }
+    } catch {}
+  }, []);
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:h-20 md:px-6">
+    <header className="sticky top-0 z-50 w-full border-b border-gray-100 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 transition-all duration-300 md:h-20 md:px-6">
         {/* Left: Brand */}
         <div className="flex items-center">
           <Link
@@ -16,7 +29,7 @@ const Navbar = () => {
 
         {/* Middle: Search */}
         <div className="flex-1 px-2 md:px-6">
-          <div className="mx-auto hidden max-w-xl cursor-pointer items-center justify-between gap-2 rounded-full border border-gray-300 bg-white px-3 py-2 shadow-sm transition hover:shadow md:flex">
+          <div className="mx-auto hidden max-w-xl cursor-pointer items-center justify-between gap-2 rounded-full border border-gray-100 bg-white px-3 py-2 shadow-sm transition-all duration-200 hover:shadow-md hover:ring-1 hover:ring-gray-200 md:flex animate-slide-up">
             <button className="truncate px-3 text-sm font-medium">
               Anywhere
             </button>
@@ -28,7 +41,7 @@ const Navbar = () => {
             <button className="truncate px-3 text-sm text-gray-600">
               Add guests
             </button>
-            <div className="ml-1 flex h-8 w-8 items-center justify-center rounded-full bg-rose-500 text-white">
+            <div className="ml-1 flex h-8 w-8 items-center justify-center rounded-full bg-rose-500 text-white transition-transform duration-200 hover:scale-105 active:scale-95">
               {/* Search icon */}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -47,8 +60,8 @@ const Navbar = () => {
           </div>
 
           {/* Mobile: Compact search */}
-          <div className="flex items-center gap-3 md:hidden">
-            <div className="flex flex-1 items-center gap-2 rounded-full border border-gray-300 bg-white px-3 py-2 shadow-sm">
+          <div className="flex items-center gap-3 md:hidden animate-slide-up">
+            <div className="flex flex-1 items-center gap-2 rounded-full border border-gray-100 bg-white px-3 py-2 shadow-sm transition-all duration-200 hover:ring-1 hover:ring-gray-200">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -66,7 +79,7 @@ const Navbar = () => {
             </div>
             <button
               aria-label="Filters"
-              className="rounded-full border border-gray-300 p-2"
+              className="rounded-full border border-gray-100 p-2 transition-transform duration-200 hover:scale-105 active:scale-95"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -82,10 +95,13 @@ const Navbar = () => {
         </div>
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-1 md:gap-2">
-          <button className="hidden rounded-full px-3 py-2 text-sm font-medium hover:bg-gray-100 md:block">
-            Airbnb your home
-          </button>
+        <div className="flex items-center gap-1 md:gap-2 animate-fade-in">
+          <Link
+            href={userName ? "/host" : "/login"}
+            className="hidden rounded-full px-3 py-2 text-sm font-medium hover:bg-gray-100 md:block"
+          >
+            Host
+          </Link>
           <button className="rounded-full p-2 hover:bg-gray-100">
             {/* Globe icon */}
             <svg
@@ -103,8 +119,8 @@ const Navbar = () => {
             </svg>
           </button>
           <Link
-            href="/login"
-            className="flex items-center gap-2 rounded-full border border-gray-300 p-1 pl-3 hover:shadow"
+            href={userName ? "/account" : "/login"}
+            className="group flex items-center gap-2 rounded-full border border-gray-200 p-1 pl-3 transition-all duration-200 hover:shadow-md hover:ring-1 hover:ring-gray-200"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -115,7 +131,7 @@ const Navbar = () => {
             >
               <path d="M3.75 7.5a.75.75 0 0 1 .75-.75h15a.75.75 0 0 1 0 1.5H4.5a.75.75 0 0 1-.75-.75Zm0 4.5a.75.75 0 0 1 .75-.75h15a.75.75 0 0 1 0 1.5H4.5a.75.75 0 0 1-.75-.75Zm0 4.5a.75.75 0 0 1 .75-.75h15a.75.75 0 0 1 0 1.5H4.5a.75.75 0 0 1-.75-.75Z" />
             </svg>
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-600 text-white">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-600 text-white transition-transform duration-200 group-hover:scale-105">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -126,6 +142,11 @@ const Navbar = () => {
                 <path d="M12 2.25a5.25 5.25 0 0 0-3.712 9.028 8.253 8.253 0 0 0-4.79 7.121.75.75 0 0 0 1.5 0 6.75 6.75 0 0 1 13.5 0 .75.75 0 0 0 1.5 0 8.253 8.253 0 0 0-4.79-7.121A5.25 5.25 0 0 0 12 2.25Zm0 1.5a3.75 3.75 0 1 1 0 7.5 3.75 3.75 0 0 1 0-7.5Z" />
               </svg>
             </div>
+            {userName && (
+              <span className="pr-2 text-sm font-medium text-gray-800">
+                {userName.split(" ")[0]}
+              </span>
+            )}
           </Link>
         </div>
       </div>
