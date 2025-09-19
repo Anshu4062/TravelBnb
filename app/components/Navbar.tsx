@@ -6,9 +6,14 @@ const Navbar = () => {
   const [userName, setUserName] = useState<string | null>(null);
   const [city, setCity] = useState<string | null>(null);
   const [locLoading, setLocLoading] = useState<boolean>(false);
-  const GOOGLE_KEY =
-    (process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string | undefined) ||
-    "AIzaSyCcKMokvRoT-R3dzEVQkrSp8CMXxCqScxc";
+  const [locationSource, setLocationSource] = useState<"gps" | "ip" | null>(
+    null
+  );
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [showUserMenu, setShowUserMenu] = useState<boolean>(false);
+  const GOOGLE_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as
+    | string
+    | undefined;
 
   useEffect(() => {
     try {
@@ -21,6 +26,23 @@ const Navbar = () => {
       if (savedCity) setCity(savedCity);
     } catch {}
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showUserMenu) {
+        const target = event.target as Element;
+        if (!target.closest(".user-menu-container")) {
+          setShowUserMenu(false);
+        }
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showUserMenu]);
+
+  // IP-based detection removed as per request; GPS-only path below
 
   const reverseGeocodeCity = async (
     latitude: number,
@@ -72,34 +94,129 @@ const Navbar = () => {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("currentCity");
+    setUserName(null);
+    setCity(null);
+    setShowUserMenu(false);
+    window.location.href = "/";
+  };
+
   const handleDetectLocation = async () => {
     if (locLoading) return;
     setLocLoading(true);
     try {
-      const position: GeolocationPosition = await new Promise(
-        (resolve, reject) => {
-          if (!navigator.geolocation) {
-            reject(new Error("Geolocation not supported"));
-            return;
-          }
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0,
-          });
-        }
-      );
-
-      const { latitude, longitude } = position.coords;
-      const resolvedCity = await reverseGeocodeCity(latitude, longitude);
-      if (resolvedCity) {
-        setCity(resolvedCity);
+      const requestPreciseLocation = async (): Promise<{
+        latitude: number;
+        longitude: number;
+      } | null> => {
         try {
-          localStorage.setItem("currentCity", resolvedCity);
-        } catch {}
+          // Check permission state first if supported
+          type NavigatorWithPermissions = Navigator & {
+            permissions?: {
+              query: (d: PermissionDescriptor) => Promise<PermissionStatus>;
+            };
+          };
+          const navWithPerms = navigator as NavigatorWithPermissions;
+          const canQueryPerms =
+            typeof navigator !== "undefined" &&
+            !!navWithPerms.permissions &&
+            typeof navWithPerms.permissions.query === "function";
+          if (canQueryPerms) {
+            try {
+              const status = await navWithPerms.permissions!.query({
+                name: "geolocation",
+              } as PermissionDescriptor);
+              if (status.state === "denied") {
+                setLocationError("Geolocation permission denied by browser");
+                return null;
+              }
+            } catch {}
+          }
+
+          // First attempt: getCurrentPosition
+          const pos1: GeolocationPosition = await new Promise(
+            (resolve, reject) => {
+              if (!navigator.geolocation) {
+                reject(new Error("Geolocation not supported"));
+                return;
+              }
+              navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 0,
+              });
+            }
+          );
+          return {
+            latitude: pos1.coords.latitude,
+            longitude: pos1.coords.longitude,
+          };
+        } catch {
+          // Second attempt: watchPosition for fresh GPS lock
+          try {
+            const pos2: GeolocationPosition = await new Promise(
+              (resolve, reject) => {
+                if (!navigator.geolocation) {
+                  reject(new Error("Geolocation not supported"));
+                  return;
+                }
+                const watchId = navigator.geolocation.watchPosition(
+                  (p) => {
+                    navigator.geolocation.clearWatch(watchId);
+                    resolve(p);
+                  },
+                  (err) => {
+                    navigator.geolocation.clearWatch(watchId);
+                    reject(err);
+                  },
+                  {
+                    enableHighAccuracy: true,
+                    timeout: 20000,
+                    maximumAge: 0,
+                  }
+                );
+              }
+            );
+            return {
+              latitude: pos2.coords.latitude,
+              longitude: pos2.coords.longitude,
+            };
+          } catch {
+            setLocationError("watchPosition failed or timed out");
+            return null;
+          }
+        }
+      };
+
+      // 1) Try precise browser geolocation first (more accurate)
+      const precise = await requestPreciseLocation();
+      if (precise) {
+        const preciseCity = await reverseGeocodeCity(
+          precise.latitude,
+          precise.longitude
+        );
+        if (preciseCity) {
+          setCity(preciseCity);
+          setLocationSource("gps");
+          setLocationError(null);
+          console.log("Location source: GPS", precise);
+          try {
+            localStorage.setItem("currentCity", preciseCity);
+          } catch {}
+          return; // Done
+        }
+      }
+
+      // No IP fallback. If we reach here, GPS failed.
+      setLocationSource(null);
+      if (!locationError) {
+        setLocationError("GPS unavailable or permission denied");
       }
     } catch {
-      // ignore
+      setLocationError("Unexpected error while detecting location");
     } finally {
       setLocLoading(false);
     }
@@ -142,7 +259,9 @@ const Navbar = () => {
             <button
               onClick={handleDetectLocation}
               className="rounded-full px-4 py-2 text-base font-medium text-gray-700 hover:bg-gray-100"
-              title="Detected location"
+              title={`Detected location via ${locationSource ?? "unknown"}$${
+                locationError ? " | " + locationError : ""
+              }`}
             >
               {city}
             </button>
@@ -192,14 +311,14 @@ const Navbar = () => {
             </button>
           )}
           {userName ? (
-            <div className="flex items-center gap-3">
-              {/* User Profile with Initial */}
-              <Link
-                href="/account"
+            <div className="user-menu-container relative flex items-center gap-3">
+              {/* User Profile with Initial - Clickable */}
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-800 text-white text-base font-medium transition-transform duration-200 hover:scale-105"
               >
                 {userName.charAt(0).toUpperCase()}
-              </Link>
+              </button>
 
               {/* Menu Button with Notification Dot */}
               <button className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-700 transition-transform duration-200 hover:scale-105">
@@ -215,6 +334,54 @@ const Navbar = () => {
                 {/* Notification Dot */}
                 <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500"></div>
               </button>
+
+              {/* User Dropdown Menu */}
+              {showUserMenu && (
+                <div className="absolute right-0 top-12 z-50 w-48 rounded-lg border border-gray-200 bg-white shadow-lg animate-fade-in">
+                  <div className="py-1">
+                    <button
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        window.location.href = "/host";
+                      }}
+                      className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className="h-4 w-4"
+                      >
+                        <path d="M11.25 4.533A9.707 9.707 0 0 0 6 3a9.735 9.735 0 0 0-3.25.555.75.75 0 0 0-.5.707v14.25a.75.75 0 0 0 1 .707A8.237 8.237 0 0 1 6 18.75c1.995 0 3.823.707 5.25 1.886V4.533ZM12.75 20.636A8.214 8.214 0 0 1 18 18.75c.966 0 1.89.166 2.75.47a.75.75 0 0 0 1-.708V4.262a.75.75 0 0 0-.5-.707A9.735 9.735 0 0 0 18 3a9.707 9.707 0 0 0-5.25 1.533v16.103Z" />
+                      </svg>
+                      Edit hosted places
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-3 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className="h-4 w-4"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.5 3.75a1.5 1.5 0 0 1 1.5 1.5v13.5a1.5 1.5 0 0 1-1.5 1.5h-6a1.5 1.5 0 0 1-1.5-1.5V15a.75.75 0 0 0-1.5 0v3.75a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V5.25a3 3 0 0 0-3-3h-6a3 3 0 0 0-3 3V9a.75.75 0 0 0 1.5 0V5.25a1.5 1.5 0 0 1 1.5-1.5h6Z"
+                          clipRule="evenodd"
+                        />
+                        <path
+                          fillRule="evenodd"
+                          d="M12.75 12a.75.75 0 0 0-.75-.75H4.027l1.72-1.72a.75.75 0 0 0-1.06-1.06l-3 3a.75.75 0 0 0 0 1.06l3 3a.75.75 0 1 0 1.06-1.06l-1.72-1.72H12a.75.75 0 0 0 .75-.75Z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      Log out
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <Link
