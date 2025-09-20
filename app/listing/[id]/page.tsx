@@ -15,6 +15,12 @@ type Listing = {
   amenitiesFav?: string[];
   amenitiesStandout?: string[];
   safetyItems?: string[];
+  price?: number;
+  location?: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  };
 };
 
 export default function ListingPage({
@@ -24,6 +30,8 @@ export default function ListingPage({
 }) {
   const { id } = useUnwrap(params);
   const [listing, setListing] = useState<Listing | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+
   useEffect(() => {
     (async () => {
       try {
@@ -33,6 +41,63 @@ export default function ListingPage({
       } catch {}
     })();
   }, [id]);
+
+  // Load Google Maps script
+  useEffect(() => {
+    const loadGoogleMaps = () => {
+      if (window.google && window.google.maps) {
+        setMapLoaded(true);
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      script.onload = () => setMapLoaded(true);
+      document.head.appendChild(script);
+    };
+
+    loadGoogleMaps();
+  }, []);
+
+  // Initialize map when listing and map are loaded
+  useEffect(() => {
+    if (!mapLoaded || !listing?.location) return;
+
+    const initMap = () => {
+      const mapElement = document.getElementById("listing-map");
+      if (!mapElement) return;
+
+      const map = new window.google.maps.Map(mapElement, {
+        center: {
+          lat: listing.location.latitude,
+          lng: listing.location.longitude,
+        },
+        zoom: 15,
+        mapTypeControl: true,
+        streetViewControl: true,
+        fullscreenControl: true,
+      });
+
+      // Add marker
+      new window.google.maps.Marker({
+        position: {
+          lat: listing.location.latitude,
+          lng: listing.location.longitude,
+        },
+        map: map,
+        title: listing.location.address,
+        icon: {
+          url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+        },
+      });
+    };
+
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(initMap, 100);
+    return () => clearTimeout(timer);
+  }, [mapLoaded, listing]);
 
   return (
     <div>
@@ -76,7 +141,7 @@ export default function ListingPage({
             {/* Overview with reserve sidebar */}
             <section className="mb-10 grid grid-cols-1 gap-6 lg:grid-cols-3">
               <div className="lg:col-span-2">
-                <div className="rounded-2xl border p-5">
+                <div className="rounded-2xl ring-1 ring-gray-200 bg-white p-5 shadow-sm">
                   <h2 className="mb-3 text-lg font-semibold">
                     About this place
                   </h2>
@@ -90,7 +155,7 @@ export default function ListingPage({
                     />
                   </div>
 
-                  <div className="mt-6 rounded-xl border p-4">
+                  <div className="mt-6 rounded-xl ring-1 ring-gray-200 bg-white p-4 shadow-sm">
                     <h3 className="mb-2 font-medium">Bathrooms</h3>
                     <ul className="grid grid-cols-1 gap-2 sm:grid-cols-3 text-sm">
                       <li>
@@ -102,7 +167,7 @@ export default function ListingPage({
                     </ul>
                   </div>
 
-                  <div className="mt-6 rounded-xl border p-4">
+                  <div className="mt-6 rounded-xl ring-1 ring-gray-200 bg-white p-4 shadow-sm">
                     <h3 className="mb-2 font-medium">Guest favourites</h3>
                     <div className="flex flex-wrap gap-2">
                       {listing.amenitiesFav?.map((a, i) => (
@@ -116,7 +181,7 @@ export default function ListingPage({
                     </div>
                   </div>
 
-                  <div className="mt-6 rounded-xl border p-4">
+                  <div className="mt-6 rounded-xl ring-1 ring-gray-200 bg-white p-4 shadow-sm">
                     <h3 className="mb-2 font-medium">Standout amenities</h3>
                     <div className="flex flex-wrap gap-2">
                       {listing.amenitiesStandout?.map((a, i) => (
@@ -130,7 +195,7 @@ export default function ListingPage({
                     </div>
                   </div>
 
-                  <div className="mt-6 rounded-xl border p-4">
+                  <div className="mt-6 rounded-xl ring-1 ring-gray-200 bg-white p-4 shadow-sm">
                     <h3 className="mb-2 font-medium">Safety items</h3>
                     <div className="flex flex-wrap gap-2">
                       {listing.safetyItems?.map((a, i) => (
@@ -143,11 +208,49 @@ export default function ListingPage({
                       ))}
                     </div>
                   </div>
+
+                  {listing.location && (
+                    <div className="mt-6 rounded-xl ring-1 ring-gray-200 bg-white p-4 shadow-sm">
+                      <h3 className="mb-2 font-medium">Location</h3>
+                      <p className="mb-3 text-sm text-gray-600">
+                        {listing.location.address}
+                      </p>
+                      <div className="relative">
+                        <div
+                          id="listing-map"
+                          className="h-64 w-full rounded-lg ring-1 ring-gray-200"
+                          style={{ minHeight: "256px" }}
+                        />
+                        {!mapLoaded && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg">
+                            <div className="text-center">
+                              <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-rose-500 mx-auto mb-2"></div>
+                              <p className="text-sm text-gray-600">
+                                Loading map...
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <p className="mt-2 text-xs text-gray-500">
+                        Coordinates: {listing.location.latitude.toFixed(6)},{" "}
+                        {listing.location.longitude.toFixed(6)}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <aside className="h-max rounded-2xl border p-5">
+              <aside className="h-max rounded-2xl ring-1 ring-gray-200 bg-white p-5 shadow-sm">
                 <h3 className="mb-3 text-lg font-semibold">Reserve</h3>
+                {listing.price && (
+                  <div className="mb-3 text-2xl font-semibold">
+                    ₹{listing.price}{" "}
+                    <span className="text-sm font-normal text-gray-600">
+                      per night
+                    </span>
+                  </div>
+                )}
                 <div className="mb-3 text-sm text-gray-600">
                   Pick your dates to see exact pricing
                 </div>

@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IListing extends Document {
+  userId: string;
   placeType: string;
   guests: number;
   bedrooms: number;
@@ -26,10 +27,17 @@ export interface IListing extends Document {
     pin?: string;
   };
   photos: string[];
+  price: number;
+  location: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  };
 }
 
 const ListingSchema = new Schema<IListing>(
   {
+    userId: { type: String, required: true, index: true },
     placeType: { type: String, required: true },
     guests: { type: Number, required: true },
     bedrooms: { type: Number, required: true },
@@ -55,9 +63,18 @@ const ListingSchema = new Schema<IListing>(
       pin: String,
     },
     photos: [{ type: String }],
+    price: { type: Number, required: true, min: 0 },
+    location: {
+      latitude: { type: Number, required: true },
+      longitude: { type: Number, required: true },
+      address: { type: String, required: true },
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    strict: false, // Allow additional fields
+  }
 );
 
-export default mongoose.models.Listing ||
-  mongoose.model<IListing>("Listing", ListingSchema);
+export default mongoose.models.ListingV2 ||
+  mongoose.model<IListing>("ListingV2", ListingSchema);
